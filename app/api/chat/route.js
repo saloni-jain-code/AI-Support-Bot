@@ -4,9 +4,8 @@ import Groq from "groq-sdk";
 
 
 // System prompt for the AI, providing guidelines on how to respond to users
-const systemPrompt = `Hello! Welcome to Headstarter AI, your go-to platform for software engineering interview preparation. 
-I'm here to assist you with any questions or issues you might have. 
-How can I help you today? You can ask me about our services, troubleshooting, or any other inquiries you may have.`;
+const systemPrompt = `Hello! Welcome to the Taylor Swift Chatbot, your go-to platform for anything related to Taylor Swift albums and songs. 
+I'm here to assist you with any questions you might have. How can I help you today?`;
 
 
 // POST function to handle incoming requests

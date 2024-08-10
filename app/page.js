@@ -1,13 +1,46 @@
 'use client'
 
-import { Box, Button, Stack, TextField } from '@mui/material'
+import { Box, Button, Stack, TextField, Typography, createTheme, ThemeProvider } from '@mui/material'
 import { useState, useRef, useEffect } from 'react'
+import {teal} from '@mui/material/colors';
+
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#576347',
+      dark: '#2E3B2C',
+      light: '#E0E0DD',
+    },
+    secondary: {
+      main: '#93A9A7',
+      dark: '#A3B7B6',
+      light: '#dd6caa',
+    },
+  },
+  typography: {
+    fontFamily: [
+      'IM Fell DW Pica',
+    ].join(','),
+  },
+});
+// 'IM Fell DW Pica',
+//       '-apple-system',
+//       'BlinkMacSystemFont',
+//       '"Segoe UI"',
+//       'Roboto',
+//       '"Helvetica Neue"',
+//       'Arial',
+//       'sans-serif',
+//       '"Apple Color Emoji"',
+//       '"Segoe UI Emoji"',
+//       '"Segoe UI Symbol"'
 
 export default function Home() {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: "Hi! I'm the Headstarter support assistant. How can I help you today?",
+      content: "Hi! I'm the Taylor Swift Chatbot. How can I help you today?",
     },
   ])
   const [message, setMessage] = useState('')
@@ -80,6 +113,7 @@ export default function Home() {
   }, [messages])
 
   return (
+    <ThemeProvider theme={theme}>
     <Box
       width="100vw"
       height="100vh"
@@ -87,13 +121,18 @@ export default function Home() {
       flexDirection="column"
       justifyContent="center"
       alignItems="center"
+      bgcolor={theme.palette.primary.dark}
     >
+      <Typography variant="h2" fontWeight={400} color='white'>taylor swift chatbot</Typography>
       <Stack
         direction={'column'}
         width="500px"
         height="700px"
-        border="1px solid black"
+        border="1px solid"
+        borderColor={theme.palette.primary.dark}
+        bgcolor={theme.palette.primary.light}
         p={2}
+        borderRadius={10}
         spacing={3}
       >
         <Stack
@@ -117,9 +156,10 @@ export default function Home() {
                     ? 'primary.main'
                     : 'secondary.main'
                 }
-                color="white"
+                color='white'
                 borderRadius={16}
                 p={3}
+                fontFamily={theme.typography.fontFamily}
               >
                 {message.content}
               </Box>
@@ -135,12 +175,19 @@ export default function Home() {
             onChange={(e) => setMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             disabled={isLoading}
+            multiline
+            InputProps={{
+              style: {
+                borderRadius: "10px",
+              }
+            }}          
           />
-          <Button variant="contained" onClick={sendMessage} disabled={isLoading}>
+          <Button variant="contained" onClick={sendMessage} disabled={isLoading} sx={{borderRadius: 4}}>
           {isLoading ? 'Sending...' : 'Send'}
           </Button>
         </Stack>
       </Stack>
     </Box>
+    </ThemeProvider>
   )
 }
