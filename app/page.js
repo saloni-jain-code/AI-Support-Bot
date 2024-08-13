@@ -3,6 +3,7 @@
 import { Box, Button, Stack, TextField, Typography, createTheme, ThemeProvider } from '@mui/material'
 import { useState, useRef, useEffect } from 'react'
 import {teal} from '@mui/material/colors';
+import bg from '/Users/sultana/Downloads/AI-Support-Bot/public/background.png';
 
 
 const theme = createTheme({
@@ -121,9 +122,23 @@ export default function Home() {
       flexDirection="column"
       justifyContent="center"
       alignItems="center"
-      bgcolor={theme.palette.primary.dark}
+      sx={{
+        backgroundImage: `url(/image.png)`,  // Correct usage with url() function
+        backgroundRepeat: "no-repeat",
+        backgroundSize: "cover",
+        
+        bgcolor: theme.palette.primary.dark,  // Background color as fallback
+      }}
     >
-      <Typography variant="h2" fontWeight={400} color='white'>taylor swift chatbot</Typography>
+      <Typography
+        variant="h2"
+        fontWeight={400}
+        fontSize={80}
+        color='white'
+        sx={{textShadow: '0 0 10px rgba(0, 0, 0, 1)'}}
+      >
+        taylor swift chatbot
+      </Typography>
       <Stack
         direction={'column'}
         width="500px"
@@ -150,6 +165,23 @@ export default function Home() {
                 message.role === 'assistant' ? 'flex-start' : 'flex-end'
               }
             >
+              {message.role === 'assistant' && (
+                <Box
+                  component="img"
+                  src="/tswift.png"
+                  alt="Bot"
+                  sx={{
+                    width: 60,
+                    height: 60,
+                    borderRadius: '50%',
+                    marginRight: 1,
+                    border: '1px solid',
+                    borderColor:'primary.dark',
+                    marginTop: '20px',
+                    objectFit: 'cover',  // Ensures the image covers the circle without distortion
+                  }}
+                />
+              )}
               <Box
                 bgcolor={
                   message.role === 'assistant'
