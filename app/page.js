@@ -3,7 +3,7 @@
 import { Box, Button, Stack, TextField, Typography, createTheme, ThemeProvider } from '@mui/material'
 import { useState, useRef, useEffect } from 'react'
 import {teal} from '@mui/material/colors';
-import bg from '/Users/sultana/Downloads/AI-Support-Bot/public/background.png';
+import bg from '/public/background.png';
 
 
 const theme = createTheme({
