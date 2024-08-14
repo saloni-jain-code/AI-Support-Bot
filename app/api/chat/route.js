@@ -7,7 +7,8 @@ import { HuggingFaceTransformersEmbeddings } from "@langchain/community/embeddin
 
 // System prompt for the AI, providing guidelines on how to respond to users
 const systemPrompt = `You are the Taylor Swift Expert Chatbot. Your job is to answer questions about Taylor Swift's albums and songs.
-Given the user's question and relevant content from the knowledge base of articles, answer the question accurately.`;
+Given the user's question and relevant content from the knowledge base of articles, answer the question accurately.
+Ignore any errors`;
 
 async function get_context(userQuestion, docSearch){
   console.log("TYPE OF USER QUESTION: " + typeof userQuestion);
@@ -31,7 +32,14 @@ async function get_context(userQuestion, docSearch){
 
 // POST function to handle incoming requests
 export async function POST(req) {
-  const data = await req.json();
+  let data;
+  try {
+    data = await req.json();
+  } catch (error) {
+    console.error("Error parsing request data", error);
+    return new NextResponse("Error parsing request data", { status: 400 });
+  }
+  
   const pc = new Pinecone({
     apiKey: process.env.PINECONE_API_KEY
   });
@@ -69,13 +77,26 @@ export async function POST(req) {
 
   // PineconeStore(index_name=pinecone_index_name, embedding=embedding_function);
   const userQuery = data[data.length - 1].content;
-  const relevant_context = await get_context(userQuery, docSearch);
-
-  const completion = await groq.chat.completions.create({
-    messages: [{role: 'system', content: systemPrompt}, ...data.slice(0,-1), {role:'user', content:userQuery + relevant_context}],
-    model: model,
-    stream: true,
-  });
+  let relevant_context;
+  try {
+    relevant_context = await get_context(userQuery, docSearch);
+  } catch (error) {
+    console.error("Error getting context docs", error);
+    return new NextResponse("Error getting context docs", { status: 500 });
+  }
+  
+  let completion;
+  try {
+    completion = await groq.chat.completions.create({
+      messages: [{role: 'system', content: systemPrompt}, ...data.slice(0,-1), {role:'user', content:userQuery + relevant_context}],
+      model: model,
+      stream: true,
+    });
+  } catch(error) {
+    console.error("Error creating completion", error);
+    return new NextResponse("Error creating completion", { status: 500 });
+  }
+  
   
   // Create a ReadableStream to handle the streaming response
   const stream = new ReadableStream({
