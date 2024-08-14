@@ -1,15 +1,8 @@
-"use client";
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
-import SignUpForm from '@/app/components/SignUpForm';
-import SignInForm from '@/app/components/SignInForm';
+'use client'
 
-<<<<<<< Updated upstream
 import { Box, Button, Stack, TextField, Typography, createTheme, ThemeProvider } from '@mui/material'
 import { useState, useRef, useEffect } from 'react'
 import {teal} from '@mui/material/colors';
-import bg from '/public/background.png';
 
 
 const theme = createTheme({
@@ -114,22 +107,12 @@ export default function Home() {
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
-=======
-export default function HomePage() {
-  const [isSignUp, setIsSignUp] = useState(false);
-  const router = useRouter();
-  const { data: session, status } = useSession();
->>>>>>> Stashed changes
 
-  // Redirect the user to /chatbot if they are already signed in
   useEffect(() => {
-    if (status === 'authenticated') {
-      router.push('/chatbot');
-    }
-  }, [status, router]);
+    scrollToBottom()
+  }, [messages])
 
   return (
-<<<<<<< Updated upstream
     <ThemeProvider theme={theme}>
     <Box
       width="100vw"
@@ -138,23 +121,9 @@ export default function HomePage() {
       flexDirection="column"
       justifyContent="center"
       alignItems="center"
-      sx={{
-        backgroundImage: `url(/image.png)`,  // Correct usage with url() function
-        backgroundRepeat: "no-repeat",
-        backgroundSize: "cover",
-        
-        bgcolor: theme.palette.primary.dark,  // Background color as fallback
-      }}
+      bgcolor={theme.palette.primary.dark}
     >
-      <Typography
-        variant="h2"
-        fontWeight={400}
-        fontSize={80}
-        color='white'
-        sx={{textShadow: '0 0 10px rgba(0, 0, 0, 1)'}}
-      >
-        taylor swift chatbot
-      </Typography>
+      <Typography variant="h2" fontWeight={400} color='white'>taylor swift chatbot</Typography>
       <Stack
         direction={'column'}
         width="500px"
@@ -181,23 +150,6 @@ export default function HomePage() {
                 message.role === 'assistant' ? 'flex-start' : 'flex-end'
               }
             >
-              {message.role === 'assistant' && (
-                <Box
-                  component="img"
-                  src="/tswift.png"
-                  alt="Bot"
-                  sx={{
-                    width: 60,
-                    height: 60,
-                    borderRadius: '50%',
-                    marginRight: 1,
-                    border: '1px solid',
-                    borderColor:'primary.dark',
-                    marginTop: '20px',
-                    objectFit: 'cover',  // Ensures the image covers the circle without distortion
-                  }}
-                />
-              )}
               <Box
                 bgcolor={
                   message.role === 'assistant'
@@ -238,14 +190,4 @@ export default function HomePage() {
     </Box>
     </ThemeProvider>
   )
-=======
-    <div>
-      <h1>{isSignUp ? 'Sign Up' : 'Sign In'}</h1>
-      {isSignUp ? <SignUpForm /> : <SignInForm />}
-      <button onClick={() => setIsSignUp(!isSignUp)}>
-        {isSignUp ? 'Already have an account? Sign In' : 'Don’t have an account? Sign Up'}
-      </button>
-    </div>
-  );
->>>>>>> Stashed changes
 }
