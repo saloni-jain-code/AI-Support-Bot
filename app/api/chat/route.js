@@ -2,7 +2,6 @@ import {NextResponse} from 'next/server' // Import NextResponse from Next.js for
 import OpenAI from 'openai' // Import OpenAI library for interacting with the OpenAI API
 import Groq from "groq-sdk";
 import { Pinecone } from '@pinecone-database/pinecone';
-import { PineconeStore } from "@langchain/pinecone";
 import { HuggingFaceTransformersEmbeddings } from "@langchain/community/embeddings/hf_transformers";
 
 // System prompt for the AI, providing guidelines on how to respond to users
@@ -10,23 +9,24 @@ const systemPrompt = `You are the Taylor Swift Expert Chatbot. Your job is to an
 Given the user's question and relevant content from the knowledge base of articles, answer the question accurately.
 Ignore any errors`;
 
-async function get_context(userQuestion, docSearch){
-  console.log("TYPE OF USER QUESTION: " + typeof userQuestion);
-  console.log("USER QUESTION: " + userQuestion);
-  let relevant_docs;
+async function getContext(queryEmbedding, pineconeIndex){
+  let queryResponse;
   try {
-    relevant_docs = await docSearch.similaritySearch(userQuestion, 3);
+    queryResponse = await pineconeIndex.query({
+        topK: 5,
+        vector: queryEmbedding,
+        includeMetadata: true,
+        includeValues: true,
+      });
   } catch (error) {
     console.error("Error searching for similar documents", error);
     return "Error searching for similar documents";
   }
-  // relevant_docs = relevant_docs.slice(0, 3);  
-  let doc_content = [];
-  for (let doc of relevant_docs){
-    doc_content.push(doc.page_content);
-  } 
-  const relevant_excerpts = doc_content.join('\n\n------------------------------------------------------\n\n');
-  return relevant_excerpts;
+  // console.log(`Found this query response: ${JSON.stringify(queryResponse, null, 2)}`);
+
+  const concatenatedPageContent = queryResponse.matches.map((match) => match.metadata.text).join("\n\n");
+  console.log(`Concatenated Page Content: ${concatenatedPageContent}`);
+  return concatenatedPageContent;
 }
 
 
@@ -43,52 +43,42 @@ export async function POST(req) {
   const pc = new Pinecone({
     apiKey: process.env.PINECONE_API_KEY
   });
+
   const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
   const model = 'llama3-8b-8192';
-  const embedding_function = new HuggingFaceTransformersEmbeddings({
+  
+  console.log(`Checking "${process.env.PINECONE_INDEX_NAME}"...`);
+// 2. Get list of existing indexes
+  const existingIndexes = await pc.listIndexes();
+  // print json of existing indexes
+  console.log('Existing Indexes:', JSON.stringify(existingIndexes, null, 2));
+  const pineconeIndex = pc.Index(process.env.PINECONE_INDEX_NAME);
+
+  const userQuery = data[data.length - 1].content;
+  const embeddingFunction = new HuggingFaceTransformersEmbeddings({
     model: "Xenova/all-MiniLM-L6-v2",
   });
-  const pineconeIndex = pc.Index(process.env.PINECONE_INDEX_NAME);
-  const dbConfig = {
-    pineconeIndex: pineconeIndex,
-  };
-  // const docSearch = await PineconeStore.fromExistingIndex(embedding_function, dbConfig)
-  let docSearch;
+  let embeddedUserQuery;
   try {
-    docSearch = await PineconeStore.fromExistingIndex(embedding_function, dbConfig);
-    console.log("PineconeStore created successfully");
+    embeddedUserQuery = await embeddingFunction.embedQuery(userQuery);
   } catch (error) {
-    console.error("Error creating PineconeStore", error);
-    return new NextResponse("Error creating PineconeStore", { status: 500 });
+    console.error("Error embedding user query", error);
+    return new NextResponse("Error embedding user query", { status: 500 });
   }
-  // PineconeStore.fromExistingIndex(embedding_function, dbConfig).then((docSearch) => {
-  //   console.log("PineconeStore created successfully", docSearch);
-  //   console.log('Doc Search:', JSON.stringify(docSearch, null, 2));
-  //   docSearch = docSearch;
-  // })
-  // .catch((error) => {
-  //   console.error("Error creating PineconeStore", error);
-  // });
-  
-  // Debugging statements
-  // console.log('Embedding Function:', JSON.stringify(embedding_function, null, 2));
-  // console.log('Pinecone Index:', JSON.stringify(pineconeIndex, null, 2));
-  // console.log('Doc Search:', JSON.stringify(docSearch, null, 2));
-
-  // PineconeStore(index_name=pinecone_index_name, embedding=embedding_function);
-  const userQuery = data[data.length - 1].content;
-  let relevant_context;
+  // console.log("Embedded User Query: " + embeddedUserQuery);
+  let relevantContext;
   try {
-    relevant_context = await get_context(userQuery, docSearch);
+    relevantContext = await getContext(embeddedUserQuery, pineconeIndex);
   } catch (error) {
     console.error("Error getting context docs", error);
     return new NextResponse("Error getting context docs", { status: 500 });
   }
-  
+  console.log("Relevant Context: " + relevantContext);
   let completion;
+  const userContent = "The user's question is: " + userQuery + "\n\n Relevant Context: " + relevantContext;
   try {
     completion = await groq.chat.completions.create({
-      messages: [{role: 'system', content: systemPrompt}, ...data.slice(0,-1), {role:'user', content:userQuery + relevant_context}],
+      messages: [{role: 'system', content: systemPrompt}, ...data.slice(0,-1), {role:'user', content:userContent}],
       model: model,
       stream: true,
     });
